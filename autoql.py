@@ -7,7 +7,7 @@ import json
 import re
 from concurrent.futures import ThreadPoolExecutor
 
-# Setup logging to file
+# Setup logging to file can also change Location here based on your requirement 
 logging.basicConfig(filename='sql_injection_test.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Banner for the script
@@ -27,7 +27,7 @@ def print_banner():
     print("Welcome to AUTOQL: Automated SQL Injection Testing Tool")
     print("Please provide the following input parameters:\n")
 
-# Validate URL format
+# Validate URL format 
 def validate_url(url):
     if not re.match(r'^https?://', url):
         raise ValueError("Invalid URL format")
@@ -37,7 +37,7 @@ def load_payloads(payload_file):
     with open(payload_file, 'r') as file:
         return [line.strip() for line in file if line.strip()]
 
-# Analyze the response to identify potential vulnerabilities
+# Analyzing for vulnerablities and blind sqli with given payload using common error messages
 def analyze_response(response, payload):
     sql_errors = [
         "syntax error", "unclosed quotation mark", "SQL syntax", "mysql_fetch",
@@ -48,7 +48,7 @@ def analyze_response(response, payload):
     if 'sleep' in payload or 'benchmark' in payload:
         start_time = time.time()
         response_time = time.time() - start_time
-        if response_time > 4:  # Assuming the delay threshold for blind SQL injection
+        if response_time > 4:  # Assuming the delay threshold for blind SQL injection bcs of payloads
             return True
     return False
 
@@ -78,7 +78,8 @@ def test_sql_injections(url, params, payloads, method="GET", session=None):
                 logging.info(f"Request URL: {response.url}")
                 logging.info(f"Response Status Code: {response.status_code}")
                 logging.info(f"Response Content: {response.text[:200]}")  # Log first 200 characters
-
+                
+                #blind sqli testing
                 if analyze_response(response, payload):
                     logging.info(f"[+] Possible vulnerability with payload: {payload} on parameter: {key}")
                     print(f"[+] Possible vulnerability with payload: {payload} on parameter: {key}")
@@ -86,7 +87,7 @@ def test_sql_injections(url, params, payloads, method="GET", session=None):
                     logging.info(f"[-] No vulnerability with payload: {payload} on parameter: {key}")
                     print(f"[-] No vulnerability with payload: {payload} on parameter: {key}")
 
-# Multithreading support for faster testing
+# Multithreading support for faster testing using user specified multi threads
 def threaded_test(url, params, payloads, method="GET", session=None):
     with ThreadPoolExecutor(max_workers=10) as executor:
         futures = []
@@ -100,7 +101,7 @@ def threaded_test(url, params, payloads, method="GET", session=None):
         for future in futures:
             future.result()  # Wait for all threads to complete
 
-# Main function to parse arguments and execute tests
+# Main function to parse CLi arguments and execute tests
 def main():
     print_banner()
 
@@ -139,10 +140,11 @@ def main():
             "' OR 1=1;--",
             "' UNION SELECT NULL,NULL,NULL--"
         ]
-
+    
+    #creating session helps in reducing time and resourse needed for new session for every request
     session = requests.Session()
 
-    # Run the test in the chosen mode
+    # Run the test in the chosen mode based on
     if args.threads > 1:
         threaded_test(args.url, params, payloads, method=args.method, session=session)
     else:
