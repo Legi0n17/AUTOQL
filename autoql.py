@@ -43,13 +43,20 @@ def analyze_response(response, payload):
         "syntax error", "unclosed quotation mark", "SQL syntax", "mysql_fetch",
         "You have an error in your SQL syntax", "Warning: mysql_", "SQLSTATE"
     ]
+    # this will check for common sql error 
     if any(error in response.text.lower() for error in sql_errors):
         return True
+    
+    #blind sql time delay 
     if 'sleep' in payload or 'benchmark' in payload:
         start_time = time.time()
         response_time = time.time() - start_time
         if response_time > 4:  # Assuming the delay threshold for blind SQL injection bcs of payloads
             return True
+    # Checking for successful login
+    success_indicators = ["Welcome", "Dashboard", "Logout", "admin"]
+    if any(indicator in response.text for indicator in success_indicators):
+        return True
     return False
 
 # Test SQL injections with parameterized testing and session management
